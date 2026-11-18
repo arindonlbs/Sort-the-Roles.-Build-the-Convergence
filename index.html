@@ -17,15 +17,15 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden}
 #startBtn{left:33%;bottom:5.5%;z-index:5}
 #instructionVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#102f40;z-index:2}
 #gameTemplate{z-index:3}
-#pictureWindow{position:absolute;z-index:2;left:16.1%;top:21.2%;width:67.8%;height:24.8%;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#pictureWindow{position:absolute;z-index:2;left:16.15%;top:21.82%;width:67.7%;height:24.42%;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #questionImage{width:100%;height:100%;object-fit:contain;display:block}
 #hud{position:absolute;z-index:5;top:5.2%;left:8%;width:84%;display:flex;justify-content:space-between;align-items:center;color:white;font-weight:800;font-size:clamp(12px,3.3vw,19px);text-shadow:0 1px 2px #923}
-#indicators{position:absolute;z-index:5;left:25.56%;top:17.14%;width:48.88%;display:flex;justify-content:space-between;gap:0;height:1.63%}
-.indicator{height:100%;width:37.72%;flex:0 0 37.72%;background:#b9b9b9;border-radius:99px;box-shadow:inset 0 1px 2px #7778;transition:background .15s}
+#indicators{position:absolute;z-index:5;left:20.58%;top:13.78%;width:39.42%;display:flex;justify-content:space-between;gap:0;height:1.37%}
+ .indicator{height:100%;width:37.72%;flex:0 0 37.72%;background:#b9b9b9;border-radius:99px;box-shadow:inset 0 1px 2px #7778;transition:background .15s}
 .indicator.good.on{background:#45bd45}.indicator.bad.on{background:#e64b43}
-#deptButtons{position:absolute;z-index:6;left:4%;right:4%;top:75.3%;height:15%;display:flex;justify-content:space-between;align-items:flex-start}
-.dept-btn{border:0;background:transparent;padding:0;width:31%;height:100%;cursor:pointer;display:flex;align-items:flex-start;justify-content:center;transition:transform .12s ease; -webkit-tap-highlight-color:transparent}
-.dept-btn img{width:100%;height:58%;object-fit:fill;filter:drop-shadow(0 2px 1px #0002);transition:filter .12s}
+#deptButtons{position:absolute;z-index:6;left:4%;right:4%;top:61.6%;height:9.2%;display:flex;justify-content:space-between;align-items:center}
+.dept-btn{border:0;background:transparent;padding:0;width:31%;height:100%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .12s ease; -webkit-tap-highlight-color:transparent}
+.dept-btn img{width:46%;height:92%;object-fit:contain;filter:drop-shadow(0 2px 1px #0002);transition:filter .12s}
 .dept-btn:focus-visible{outline:3px solid #fff;outline-offset:2px;border-radius:14px}
 .dept-btn:active img{filter:brightness(.9)}
 #feedback{position:absolute;z-index:7;left:0;right:0;top:52%;text-align:center;font-weight:800;font-size:clamp(13px,3.6vw,20px);color:#fff;text-shadow:0 1px 3px #0008;pointer-events:none}
@@ -75,25 +75,33 @@ const files=[
 '03_Images/Medical Department_1.png','03_Images/Medical Department_2.png','03_Images/Medical Department_3.png','03_Images/Medical Department_4.png','03_Images/Medical Department_5.png',
 '03_Images/Coordination_1.png','03_Images/Coordination_2.png','03_Images/Coordination_3.png','03_Images/Coordination_4.png','03_Images/Coordination_5.png'
 ];
-let deck=[],index=0,score=0,attempts=0,locked=false;
+let deck=[],index=0,score=0,attempts=0,locked=false,wrongTimer=null,advanceTimer=null;
 function show(name){Object.values(screens).forEach(x=>x.classList.remove('active'));screens[name].classList.add('active')}
 function shuffle(a){let b=[...a];for(let i=b.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
 function department(path){let f=path.split('/').pop();return f.startsWith('ULB_')?'ULB':f.startsWith('Medical Department_')?'Medical Department':'Coordination'}
 function setLights(good,bad){$('#correctLight').classList.toggle('on',good);$('#wrongLight').classList.toggle('on',bad)}
 function updateHud(){$('#scoreText').textContent='Score: '+score;$('#progressText').textContent=(index+1)+' / '+deck.length}
-function loadQuestion(){attempts=0;locked=false;setLights(false,false);$('#feedback').textContent='';$('#questionImage').src=deck[index];updateHud()}
+function loadQuestion(){if(wrongTimer)clearTimeout(wrongTimer);if(advanceTimer)clearTimeout(advanceTimer);wrongTimer=null;advanceTimer=null;attempts=0;locked=false;setLights(false,false);$('#feedback').textContent='';$('#questionImage').src=deck[index];updateHud()}
 function nextQuestion(){index++;if(index>=deck.length){$('#endScore').textContent=score+' / '+deck.length;show('end');return}loadQuestion()}
 function answer(choice){
  if(locked)return;
+ if(wrongTimer){clearTimeout(wrongTimer);wrongTimer=null;}
+ if(advanceTimer){clearTimeout(advanceTimer);advanceTimer=null;}
  const right=department(deck[index]);
  if(choice===right){
-   locked=true;setLights(true,attempts>0);
+   locked=true;setLights(true,false);
    if(attempts===0)score++;
    updateHud();$('#feedback').textContent='Correct!';
-   setTimeout(nextQuestion,850);
+   advanceTimer=setTimeout(nextQuestion,850);
  }else{
    attempts++;setLights(false,true);$('#feedback').textContent=attempts===1?'Try once more!':'';
-   if(attempts>=2){locked=true;setTimeout(nextQuestion,750)}
+   wrongTimer=setTimeout(()=>{ $('#wrongLight').classList.remove('on'); wrongTimer=null; },5000);
+   if(attempts>=2){
+     locked=true;
+     if(wrongTimer)clearTimeout(wrongTimer);
+     wrongTimer=setTimeout(()=>{ $('#wrongLight').classList.remove('on'); wrongTimer=null; },5000);
+     advanceTimer=setTimeout(nextQuestion,5000);
+   }
  }
 }
 function startGame(){deck=shuffle(files);index=0;score=0;loadQuestion();show('game')}
