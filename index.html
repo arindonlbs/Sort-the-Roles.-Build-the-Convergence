@@ -28,7 +28,7 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden}
 .dept-btn img{width:46%;height:92%;object-fit:contain;filter:drop-shadow(0 2px 1px #0002);transition:filter .12s}
 .dept-btn:focus-visible{outline:3px solid #fff;outline-offset:2px;border-radius:14px}
 .dept-btn:active img{filter:brightness(.9)}
-#feedback{position:absolute;z-index:7;left:0;right:0;top:52%;text-align:center;font-weight:800;font-size:clamp(13px,3.6vw,20px);color:#fff;text-shadow:0 1px 3px #0008;pointer-events:none}
+#feedback{position:absolute;z-index:7;left:2%;right:2%;top:52%;text-align:center;font-weight:900;font-size:clamp(22px,6vw,32px);line-height:1.15;letter-spacing:.2px;color:#fff;text-shadow:0 2px 4px #000b;pointer-events:none}
 #endScore{position:absolute;z-index:4;top:48%;left:0;width:100%;text-align:center;font-weight:800;color:#fff;font-size:clamp(23px,7vw,38px);text-shadow:0 2px 3px #9a3333}
 #replayBtn{position:absolute;z-index:5;right:9%;top:56.5%;width:22%;cursor:pointer;transition:transform .12s}
 #replayBtn:active{transform:translateY(5px) scale(.94)}
@@ -89,18 +89,29 @@ function answer(choice){
  if(advanceTimer){clearTimeout(advanceTimer);advanceTimer=null;}
  const right=department(deck[index]);
  if(choice===right){
-   locked=true;setLights(true,false);
+   locked=true;
+   setLights(true,false);
    if(attempts===0)score++;
-   updateHud();$('#feedback').textContent='Correct!';
-   advanceTimer=setTimeout(nextQuestion,850);
+   updateHud();
+   $('#feedback').textContent='Correct!';
+   // Briefly show the result, then move on without an unnecessary pause.
+   advanceTimer=setTimeout(nextQuestion,650);
  }else{
-   attempts++;setLights(false,true);$('#feedback').textContent=attempts===1?'Try once more!':'';
-   wrongTimer=setTimeout(()=>{ $('#wrongLight').classList.remove('on'); wrongTimer=null; },5000);
-   if(attempts>=2){
+   attempts++;
+   setLights(false,true);
+   if(attempts===1){
+     $('#feedback').textContent='Try again!';
+     // Keep the first-wrong indicator visible for up to five seconds.
+     wrongTimer=setTimeout(()=>{
+       $('#wrongLight').classList.remove('on');
+       $('#feedback').textContent='';
+       wrongTimer=null;
+     },5000);
+   }else{
      locked=true;
-     if(wrongTimer)clearTimeout(wrongTimer);
-     wrongTimer=setTimeout(()=>{ $('#wrongLight').classList.remove('on'); wrongTimer=null; },5000);
-     advanceTimer=setTimeout(nextQuestion,5000);
+     $('#feedback').textContent='You missed!';
+     // Do not make the player wait five seconds after the second mistake.
+     advanceTimer=setTimeout(nextQuestion,650);
    }
  }
 }
